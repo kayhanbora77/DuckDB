@@ -113,4 +113,3 @@ The codebase follows these principles:
 ## Testing
 
 To run the application in a test environment, ensure the DuckDB database file exists at the configured path.
-

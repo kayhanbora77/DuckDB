@@ -150,4 +150,3 @@ class ProcessingResult:
         """Validate the processing result."""
         if not isinstance(self.groups, list):
             self.groups = []
-

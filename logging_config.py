@@ -50,4 +50,3 @@ def setup_logging(log_level: str = "INFO", log_file: Optional[str] = None) -> No
 def get_logger(name: str) -> logging.Logger:
     """Get a logger instance with the specified name."""
     return logging.getLogger(name)
-
