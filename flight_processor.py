@@ -23,7 +23,7 @@ class FlightProcessor:
     """Handles flight data processing operations."""
 
     @staticmethod
-    def has_three_zeros_at_the_end_in_flight_numbers(row: Dict[str, Any]) -> bool:
+    def has_bus_transition(row: Dict[str, Any]) -> bool:
         """
         Check if any flight number in the row ends with three zeros.
 

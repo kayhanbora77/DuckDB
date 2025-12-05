@@ -47,7 +47,7 @@ def process_all_flights() -> None:
                 booking_ref = row.get('BookingRef', 'Unknown')
                 pax_name = row.get('PaxName', 'Unknown')
 
-                if FlightProcessor.has_three_zeros_at_the_end_in_flight_numbers(row):
+                if FlightProcessor.has_bus_transition(row):
                     logger.info(f"Skipping row {index + 1}/{total_rows}: "
                                 f"BookingRef={booking_ref}, PaxName={pax_name}")
                     continue

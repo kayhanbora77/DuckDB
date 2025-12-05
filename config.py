@@ -14,7 +14,7 @@ class Config:
     DATABASE_PATH = DATABASE_DIR / DATABASE_NAME
 
     # Table names
-    MAIN_TABLE = "my_db.main.TBO3_2021_100"    
+    MAIN_TABLE = "my_db.main.TBO3_2021"    
 
     # Column prefixes
     FLIGHT_NUMBER_PREFIX = "FlightNumber"
@@ -27,7 +27,7 @@ class Config:
     MAX_FLIGHT_ENTRIES = 7
 
     # Default values
-    DEFAULT_TICKET_NO = "INSERT"
+    DEFAULT_TICKET_NO = "INSERTED"
     UPDATED_TICKET_NO = "UPDATED"
 
     @classmethod
