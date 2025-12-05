@@ -12,7 +12,7 @@ import sys
 from typing import NoReturn
 
 from database import DatabaseError, flight_repo
-from flight_processor import FlightProcessorError, flight_processor
+from flight_processor import FlightProcessorError, flight_processor, FlightProcessor
 from logging_config import setup_logging
 from models import ProcessingResult
 
@@ -42,10 +42,15 @@ def process_all_flights() -> None:
         error_count = 0
 
         # Process each row
-        for index, row in df.iterrows():
+        for index, row in df.iterrows():            
             try:
                 booking_ref = row.get('BookingRef', 'Unknown')
                 pax_name = row.get('PaxName', 'Unknown')
+
+                if FlightProcessor.has_three_zeros_at_the_end_in_flight_numbers(row):
+                    logger.info(f"Skipping row {index + 1}/{total_rows}: "
+                                f"BookingRef={booking_ref}, PaxName={pax_name}")
+                    continue
 
                 logger.info(f"Processing row {index + 1}/{total_rows}: "
                            f"BookingRef={booking_ref}, PaxName={pax_name}")
@@ -83,7 +88,6 @@ def process_all_flights() -> None:
     except Exception as e:
         logger.error(f"Unexpected error during processing: {e}")
         raise
-
 
 def main() -> NoReturn:
     """

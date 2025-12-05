@@ -23,6 +23,23 @@ class FlightProcessor:
     """Handles flight data processing operations."""
 
     @staticmethod
+    def has_three_zeros_at_the_end_in_flight_numbers(row: Dict[str, Any]) -> bool:
+        """
+        Check if any flight number in the row ends with three zeros.
+
+        Args:
+            row: Database row containing flight data
+
+        Returns:
+            True if any flight number ends with '000', False otherwise
+        """
+        for i in range(1, config.MAX_FLIGHT_ENTRIES + 1):
+            flight_number = row.get(f"{config.FLIGHT_NUMBER_PREFIX}{i}")
+            if flight_number and str(flight_number).endswith('000'):
+                return True
+        return False
+
+    @staticmethod
     def calculate_hours_difference(first_date: datetime, next_date: datetime) -> float:
         """Calculate the difference in hours between two dates."""
         if not first_date or not next_date:
@@ -258,7 +275,23 @@ class FlightProcessor:
                 message=f"Processing failed: {str(e)}"
             )
 
+def has_three_zeros_at_the_end(flight_number: str) -> bool:
+    """
+    Check if a flight number ends with three zeros.
+    """
+    if not flight_number or flight_number == 'Unknown':
+        return False
+    return str(flight_number).endswith('000')
 
+def has_three_zeros_at_the_end_in_flight_numbers(row: Dict[str, Any]) -> bool:
+    """
+    Check if a row has a flight number that ends with three zeros.
+    """
+    for i in range(1, 8):
+        flight_number = row.get(f'FlightNumber{i}', 'Unknown')
+        if has_three_zeros_at_the_end(flight_number):
+            return True
+    return False
 # Global processor instance
 flight_processor = FlightProcessor()
 

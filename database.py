@@ -126,6 +126,7 @@ class FlightRepository:
         params = tuple(params)
 
         self.db.execute_query(query, params)
+        logger.info(f"INSERTED ROW FOR BOOKING {row_data.get('BookingRef', 'Unknown')}")
 
     def update_flight(self, row_data: Dict[str, Any]) -> None:
         """Update an existing flight record."""
@@ -154,7 +155,7 @@ class FlightRepository:
         )
 
         self.db.execute_query(query, params)
-
+        logger.info(f"UPDATED ROW FOR BOOKING {row_data.get('BookingRef', 'Unknown')}")
 
 # Global instances
 db_connection = DatabaseConnection()
