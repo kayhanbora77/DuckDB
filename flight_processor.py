@@ -23,23 +23,6 @@ class FlightProcessor:
     """Handles flight data processing operations."""
 
     @staticmethod
-    def has_bus_transition(row: Dict[str, Any]) -> bool:
-        """
-        Check if any flight number in the row ends with three zeros.
-
-        Args:
-            row: Database row containing flight data
-
-        Returns:
-            True if any flight number ends with '000', False otherwise
-        """
-        for i in range(1, config.MAX_FLIGHT_ENTRIES + 1):
-            flight_number = row.get(f"{config.FLIGHT_NUMBER_PREFIX}{i}")
-            if flight_number and str(flight_number).endswith('000'):
-                return True
-        return False
-
-    @staticmethod
     def calculate_hours_difference(first_date: datetime, next_date: datetime) -> float:
         """Calculate the difference in hours between two dates."""
         if not first_date or not next_date:

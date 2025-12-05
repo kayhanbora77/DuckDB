@@ -1,4 +1,4 @@
-# Flight Data Processing Application v-1
+# Flight Data Processing Application
 
 A Python application for processing and grouping flight booking data using DuckDB.
 
@@ -95,6 +95,7 @@ All errors are logged with appropriate severity levels.
 2. **Flight Extraction**: Extract departure dates and flight numbers from each row
 3. **Grouping Logic**: Group flights within 24-hour windows
 4. **Database Updates**: Create insert records for grouped flights and update original records
+
 ## Dependencies
 
 - `duckdb`: High-performance analytical database
