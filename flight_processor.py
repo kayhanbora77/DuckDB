@@ -230,8 +230,8 @@ class FlightProcessor:
 
             if insert_data:
                 # Perform database operations
-                flight_repo.insert_flight_update(insert_data)
-                flight_repo.update_flight_record(update_data)
+                flight_repo.insert_flight(insert_data)
+                flight_repo.update_flight(update_data)
 
                 logger.info(f"Processed row for booking {row_data.get('BookingRef', 'Unknown')}")
 
@@ -261,3 +261,4 @@ class FlightProcessor:
 
 # Global processor instance
 flight_processor = FlightProcessor()
+

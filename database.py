@@ -98,8 +98,8 @@ class FlightRepository:
         """
         return self.db.fetch_dataframe(query, (pax_name, booking_ref))
 
-    def insert_flight_update(self, row_data: Dict[str, Any]) -> None:
-        """Insert a new flight record into the update table."""
+    def insert_flight(self, row_data: Dict[str, Any]) -> None:
+        """Insert a new flight record into the main table."""
         columns = [
             'PaxName', 'BookingRef', 'ETicketNo', 'ClientCode', 'Airline', 'JourneyType',
             'FlightNumber1', 'FlightNumber2', 'FlightNumber3', 'FlightNumber4',
@@ -112,7 +112,7 @@ class FlightRepository:
 
         placeholders = ', '.join(['?' for _ in columns])
         query = f"""
-            INSERT INTO {config.UPDATE_TABLE} ({', '.join(columns)})
+            INSERT INTO {config.MAIN_TABLE} ({', '.join(columns)})
             VALUES ({placeholders})
         """
 
@@ -127,7 +127,7 @@ class FlightRepository:
 
         self.db.execute_query(query, params)
 
-    def update_flight_record(self, row_data: Dict[str, Any]) -> None:
+    def update_flight(self, row_data: Dict[str, Any]) -> None:
         """Update an existing flight record."""
         query = f"""
             UPDATE {config.MAIN_TABLE}

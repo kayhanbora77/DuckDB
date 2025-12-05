@@ -11,8 +11,8 @@ import logging
 import sys
 from typing import NoReturn
 
-from database import flight_repo, DatabaseError
-from flight_processor import flight_processor, FlightProcessorError
+from database import DatabaseError, flight_repo
+from flight_processor import FlightProcessorError, flight_processor
 from logging_config import setup_logging
 from models import ProcessingResult
 
