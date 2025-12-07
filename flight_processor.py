@@ -4,6 +4,7 @@ Flight processing utilities for grouping and manipulating flight data.
 from itertools import pairwise
 import logging
 from datetime import datetime
+from re import A
 from typing import List, Dict, Any, Optional, Tuple
 
 import pandas as pd
@@ -24,24 +25,10 @@ class FlightProcessor:
     """Handles flight data processing operations."""
 
     @staticmethod
-    def calculate_hours_difference(first_date: datetime, next_date: datetime) -> float:
-        """Calculate the difference in hours between two dates."""
-        if not first_date or not next_date:
-            return 0.0
-        diff = next_date - first_date
-        return diff.total_seconds() / 3600
-
-    @staticmethod
     def extract_flight_data_from_row(row: Dict[str, Any]) -> Tuple[List[datetime], List[str]]:
-        """
-        Extract departure dates and flight numbers from a database row.
 
-        Returns:
-            Tuple of (departure_dates, flight_numbers) lists
-        """
         departure_dates = []
         flight_numbers = []
-
         for i in range(1, config.MAX_FLIGHT_ENTRIES + 1):
             flight_num_key = f"{config.FLIGHT_NUMBER_PREFIX}{i}"
             date_key = f"{config.DEPARTURE_DATE_PREFIX}{i}"
@@ -65,141 +52,92 @@ class FlightProcessor:
                     logger.warning(f"Failed to parse date {departure_date_str}: {e}")
 
         return departure_dates, flight_numbers
-
+    
     @staticmethod
-    def group_flights_by_departure_date(
-        departure_dates: List[datetime],
-        flight_numbers: List[str]
-    ) -> List[List[datetime]]:
-        """
-        Group flights based on departure date proximity (within 24 hours).
+    def group_by_24h(datetimes, flight_numbers):
+        # Make sure the list is sorted
+        datetimes = sorted(datetimes)
 
-        Args:
-            departure_dates: List of departure dates
-            flight_numbers: List of corresponding flight numbers
+        flight_groups = []
+        current_flight_group = [flight_numbers[0]]
+        date_groups = []
+        current_date_group = [datetimes[0]]
 
-        Returns:
-            List of FlightGroup objects
-        """
-        if len(departure_dates) != len(flight_numbers):
-            raise FlightProcessorError(
-                f"Mismatched lengths: {len(departure_dates)} dates, {len(flight_numbers)} flights"
-            )
-
-        if not departure_dates:
-            return []
-
-        groups = []
-        current_group = []
-        #current_group = [departure_dates[0]]
-       
-        #for prev, curr in zip(departure_dates, departure_dates[1:]):
-        for prev_date, curr_date in pairwise(departure_dates):
-            current_group.append(prev_date)   
-            hours_diff = FlightProcessor.calculate_hours_difference(prev_date, curr_date)
-
-            if hours_diff <= config.HOURS_THRESHOLD:
-                current_group.append(curr_date)
+        for i in range(1, len(datetimes)):
+            diff_hours = (datetimes[i] - datetimes[i-1]).total_seconds() / 3600
+            
+            if diff_hours <= 24:
+                # Same group
+                current_date_group.append(datetimes[i])
+                current_flight_group.append(flight_numbers[i])
             else:
-                groups.append(current_group)
-                current_group = [curr_date]
+                # Start new group
+                date_groups.append(current_date_group)
+                flight_groups.append(current_flight_group)
+                
+                current_date_group = [datetimes[i]]
+                current_flight_group = [flight_numbers[i]]
+        # Append last group
+        date_groups.append(current_date_group)
+        flight_groups.append(current_flight_group)
+        for grp_date in date_groups:
+            logger.info(f"DATE_GROUP==> {grp_date}")
+        for grp_flight in flight_groups:
+            logger.info(f"FLIGHT_GROUP==>{grp_flight}")    
 
-        # Add final group
-        groups.append(current_group)
-        
-        logger.info(f"Created {len(groups)} flight groups")
-        
-        return groups
+
+        return date_groups, flight_groups
 
     @staticmethod
-    def get_insert_and_update_rows(original_row: Dict[str, Any], groups: List[List[datetime]]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """
-        Create data for inserting a new row based on flight groups.
+    def get_insert_list(original_row: Dict[str, Any], date_groups: List[List[datetime]], flight_groups: List[List[datetime]]) -> List[Dict[str, Any]]:
 
-        Args:
-            original_row: Original row data
-            groups: List of flight groups (each group is a list of datetime objects)
-
-        Returns:
-            Dictionary with insert data or None if no processing needed
-        """
-        if len(groups) <= 1:
-            logger.info("No processing needed - single or no groups")
-            return {}, {}
-
-        insert_data = original_row.copy()
-        update_data = original_row.copy()
-
+        insert_list = []        
         group_idx = 1
-        for group in groups:
-            if original_row.get("BookingRef") == "27967777" :
-                logger.info("EACH_GROUP: %s", group)
-            if len(group) > 1:
-                item_idx = 1
-                for item in group:
-                    target_idx = group_idx + item_idx - 1
-                    source_idx = group_idx + item_idx + 1
+        for date_group, flight_group in zip(date_groups, flight_groups):
+            logger.info("FLIGHT_NUMBER_GRP==>: %s", flight_group)
+            logger.info("DATE_GRP==>: %s", date_group)
 
-                    insert_data[f'{config.FLIGHT_NUMBER_PREFIX}{target_idx}'] = (
-                        original_row.get(f'{config.FLIGHT_NUMBER_PREFIX}{source_idx}')
-                    )
-                    insert_data[f'{config.DEPARTURE_DATE_PREFIX}{target_idx}'] = (
-                        original_row.get(f'{config.DEPARTURE_DATE_PREFIX}{source_idx}')
-                    )
-                    # Clear the original positions
-                    insert_data[f'{config.FLIGHT_NUMBER_PREFIX}{source_idx}'] = None
-                    insert_data[f'{config.DEPARTURE_DATE_PREFIX}{source_idx}'] = None
-
-                    update_data[f'{config.FLIGHT_NUMBER_PREFIX}{source_idx}'] = None
-                    update_data[f'{config.DEPARTURE_DATE_PREFIX}{source_idx}'] = None
-                    item_idx += 1
-            elif len(group) == 1:
-                target_idx = 1
-                source_idx = 2
-                insert_data[f'{config.FLIGHT_NUMBER_PREFIX}{target_idx}'] = (
-                    original_row.get(f'{config.FLIGHT_NUMBER_PREFIX}{source_idx}')
-                )
-                insert_data[f'{config.DEPARTURE_DATE_PREFIX}{target_idx}'] = (
-                    original_row.get(f'{config.DEPARTURE_DATE_PREFIX}{source_idx}')
-                )
-                # Clear the original positions
-                insert_data[f'{config.FLIGHT_NUMBER_PREFIX}{source_idx}'] = None
-                insert_data[f'{config.DEPARTURE_DATE_PREFIX}{source_idx}'] = None
-
-                update_data[f'{config.FLIGHT_NUMBER_PREFIX}{source_idx}'] = None
-                update_data[f'{config.DEPARTURE_DATE_PREFIX}{source_idx}'] = None
-
-            group_idx += 1
-
+            insert_data = original_row.copy() 
             for i in range(1, config.MAX_FLIGHT_ENTRIES + 1):
                 flight_key = f'{config.FLIGHT_NUMBER_PREFIX}{i}'
                 date_key = f'{config.DEPARTURE_DATE_PREFIX}{i}'
-                if insert_data.get(flight_key) == 'NULL':
-                    insert_data[flight_key] = None
-                if insert_data.get(date_key) == 'NULL':
-                    insert_data[date_key] = None
-                if update_data.get(flight_key) == 'NULL':
-                    update_data[flight_key] = None
-                if update_data.get(date_key) == 'NULL':
-                    update_data[date_key] = None
+                insert_data[flight_key] = None
+                insert_data[date_key] = None
+                # if insert_data.get(flight_key) == 'NULL':
+                #     insert_data[flight_key] = None
+                # if insert_data.get(date_key) == 'NULL':
+                #     insert_data[date_key] = None
+                                    
+            item_idx = 1
+            for date_item, flight_item in zip(date_group, flight_group):
+                logger.info("FLIGHT_NUMBER==>: %s", flight_item)
+                logger.info("DEPARTURE_DATE==>: %s", date_item)
+                insert_data[f'{config.FLIGHT_NUMBER_PREFIX}{item_idx}'] = (flight_item)
+                insert_data[f'{config.DEPARTURE_DATE_PREFIX}{item_idx}'] = (date_item)
+                item_idx += 1
+                # target_idx = group_idx + item_idx - 1#1
+                # source_idx = group_idx + item_idx + 1#3
 
-        if original_row.get("BookingRef") == "27967777" :
-            logger.info("INSERT_DATA: %s", insert_data)
-            logger.info("UPDATE_DATA: %s", update_data)
-
-        return insert_data, update_data
+                # insert_data[f'{config.FLIGHT_NUMBER_PREFIX}{target_idx}'] = (
+                #     original_row.get(f'{config.FLIGHT_NUMBER_PREFIX}{source_idx}')
+                # )
+                # insert_data[f'{config.DEPARTURE_DATE_PREFIX}{target_idx}'] = (
+                #     original_row.get(f'{config.DEPARTURE_DATE_PREFIX}{source_idx}')
+                # )
+                # # Clear the original positions
+                # insert_data[f'{config.FLIGHT_NUMBER_PREFIX}{source_idx}'] = None
+                # insert_data[f'{config.DEPARTURE_DATE_PREFIX}{source_idx}'] = None
+                # item_idx += 1
+            insert_list.append(insert_data)
+                
+            group_idx += 1
+        
+        logger.info("INSERT_DATA_LIST==>: %s", insert_list)
+        return insert_list
 
     @staticmethod
     def process_flight_row(row_data: Dict[str, Any]) -> ProcessingResult:
-        """
-        Process a single flight row - main entry point for flight processing.
 
-        Args:
-            row_data: Row data from database
-
-        Returns:
-            ProcessingResult with the outcome
-        """
         try:
             # Extract flight data
             departure_dates, flight_numbers = FlightProcessor.extract_flight_data_from_row(row_data)
@@ -213,39 +151,39 @@ class FlightProcessor:
                 )
 
             # Group flights
-            groups = FlightProcessor.group_flights_by_departure_date(departure_dates, flight_numbers)
-
-            if len(groups) <= 1:
+            #groups = FlightProcessor.group_flights_by_departure_date(departure_dates, flight_numbers)
+            date_groups, flight_groups = FlightProcessor.group_by_24h(departure_dates, flight_numbers)
+            if len(date_groups) <= 1:
                 return ProcessingResult(
                     original_row=FlightRow.from_dataframe_row(row_data),
-                    groups=groups,
+                    groups=date_groups,
                     success=True,
                     message="Single group - no processing needed"
                 )
 
             # Create insert and update data
-            insert_data, update_data = FlightProcessor.get_insert_and_update_rows(row_data, groups)
+            insert_list = FlightProcessor.get_insert_list(row_data, date_groups, flight_groups)
 
-            logger.info(f"Insert data: {insert_data}")
-            logger.info(f"Update data: {update_data}")
+            logger.info(f"Insert data: {insert_list}")            
 
-            if insert_data:
+            if insert_list:
                 # Perform database operations
-                flight_repo.update_flight(update_data)
-                flight_repo.insert_flight(insert_data)                
+                #flight_repo.update_flight(update_data)
+                for insert_data in insert_list:
+                    flight_repo.insert_flight(insert_data)                
 
                 logger.info(f"Processed row for booking {row_data.get('BookingRef', 'Unknown')}")
 
                 return ProcessingResult(
                     original_row=FlightRow.from_dataframe_row(row_data),
-                    groups=groups,
+                    groups=date_groups,
                     success=True,
                     message="Row processed and database updated"
                 )
             else:
                 return ProcessingResult(
                     original_row=FlightRow.from_dataframe_row(row_data),
-                    groups=groups,
+                    groups=date_groups,
                     success=True,
                     message="No database changes needed"
                  )
