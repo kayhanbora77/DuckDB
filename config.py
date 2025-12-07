@@ -14,7 +14,7 @@ class Config:
     DATABASE_PATH = DATABASE_DIR / DATABASE_NAME
 
     # Table names
-    MAIN_TABLE = "my_db.main.TBO3_2021_100"    
+    MAIN_TABLE = "my_db.main.TBO3_2021_ONBIN"    
 
     # Column prefixes
     FLIGHT_NUMBER_PREFIX = "FlightNumber"
