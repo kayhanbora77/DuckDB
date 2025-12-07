@@ -98,7 +98,7 @@ class FlightProcessor:
             current_group.append(prev_date)   
             hours_diff = FlightProcessor.calculate_hours_difference(prev_date, curr_date)
 
-            if hours_diff < config.HOURS_THRESHOLD:
+            if hours_diff <= config.HOURS_THRESHOLD:
                 current_group.append(curr_date)
             else:
                 groups.append(current_group)
