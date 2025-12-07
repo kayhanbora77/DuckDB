@@ -80,10 +80,10 @@ class FlightProcessor:
         # Append last group
         date_groups.append(current_date_group)
         flight_groups.append(current_flight_group)
-        for grp_date in date_groups:
-            logger.info(f"DATE_GROUP==> {grp_date}")
-        for grp_flight in flight_groups:
-            logger.info(f"FLIGHT_GROUP==>{grp_flight}")    
+        # for grp_date in date_groups:
+        #     logger.info(f"DATE_GROUP==> {grp_date}")
+        # for grp_flight in flight_groups:
+        #     logger.info(f"FLIGHT_GROUP==>{grp_flight}")    
 
 
         return date_groups, flight_groups
@@ -94,8 +94,8 @@ class FlightProcessor:
         insert_list = []        
         group_idx = 1
         for date_group, flight_group in zip(date_groups, flight_groups):
-            logger.info("FLIGHT_NUMBER_GRP==>: %s", flight_group)
-            logger.info("DATE_GRP==>: %s", date_group)
+            # logger.info("FLIGHT_NUMBER_GRP==>: %s", flight_group)
+            # logger.info("DATE_GRP==>: %s", date_group)
 
             insert_data = original_row.copy() 
             for i in range(1, config.MAX_FLIGHT_ENTRIES + 1):
@@ -110,8 +110,8 @@ class FlightProcessor:
                                     
             item_idx = 1
             for date_item, flight_item in zip(date_group, flight_group):
-                logger.info("FLIGHT_NUMBER==>: %s", flight_item)
-                logger.info("DEPARTURE_DATE==>: %s", date_item)
+                # logger.info("FLIGHT_NUMBER==>: %s", flight_item)
+                # logger.info("DEPARTURE_DATE==>: %s", date_item)
                 insert_data[f'{config.FLIGHT_NUMBER_PREFIX}{item_idx}'] = (flight_item)
                 insert_data[f'{config.DEPARTURE_DATE_PREFIX}{item_idx}'] = (date_item)
                 item_idx += 1
@@ -132,7 +132,7 @@ class FlightProcessor:
                 
             group_idx += 1
         
-        logger.info("INSERT_DATA_LIST==>: %s", insert_list)
+        # logger.info("INSERT_DATA_LIST==>: %s", insert_list)
         return insert_list
 
     @staticmethod
@@ -164,7 +164,7 @@ class FlightProcessor:
             # Create insert and update data
             insert_list = FlightProcessor.get_insert_list(row_data, date_groups, flight_groups)
 
-            logger.info(f"Insert data: {insert_list}")            
+            #logger.info(f"Insert data: {insert_list}")            
 
             if insert_list:
                 # Perform database operations
