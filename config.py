@@ -27,7 +27,7 @@ class Config:
     MAX_FLIGHT_ENTRIES = 7
 
     # Default values
-    DEFAULT_TICKET_NO = "INSERT"
+    INSERTED_TICKET_NO = "INSERTED"
     UPDATED_TICKET_NO = "UPDATED"
 
     @classmethod

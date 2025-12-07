@@ -12,7 +12,7 @@ import sys
 from typing import NoReturn
 
 from database import DatabaseError, flight_repo
-from flight_processor import FlightProcessorError, flight_processor, has_three_zeros_at_the_end
+from flight_processor import FlightProcessorError, flight_processor, has_bus_transition
 from logging_config import setup_logging
 from models import ProcessingResult
 
@@ -47,7 +47,7 @@ def process_all_flights() -> None:
                 booking_ref = row.get('BookingRef', 'Unknown')
                 pax_name = row.get('PaxName', 'Unknown')
 
-                if has_three_zeros_at_the_end_in_flight_numbers(row):
+                if has_bus_transition(row):
                     logger.info(f"Skipping row {index + 1}/{total_rows}: "
                                 f"BookingRef={booking_ref}, PaxName={pax_name}")
                     continue

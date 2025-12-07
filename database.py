@@ -82,13 +82,12 @@ class FlightRepository:
     def __init__(self, db_connection: Optional[DatabaseConnection] = None):
         self.db = db_connection or DatabaseConnection()
 
-    def get_all_flights(self, exclude_journey_type: str = "Return") -> pd.DataFrame:
+    def get_all_flights(self) -> pd.DataFrame:
         """Get all flight records excluding specified journey type."""
         query = f"""
-            SELECT * FROM {config.MAIN_TABLE}
-            WHERE JourneyType <> ?
+            SELECT * FROM {config.MAIN_TABLE}        
         """
-        return self.db.fetch_dataframe(query, (exclude_journey_type,))
+        return self.db.fetch_dataframe(query)
 
     def get_flight_by_passenger(self, pax_name: str, booking_ref: str) -> pd.DataFrame:
         """Get flight record by passenger name and booking reference."""
@@ -120,7 +119,7 @@ class FlightRepository:
         params = [row_data.get(col, None) for col in columns]
 
         # Set ETicketNo to INSERT
-        params[2] = config.DEFAULT_TICKET_NO  # ETicketNo position
+        params[2] = config.INSERTED_TICKET_NO  # ETicketNo position
 
         # Convert to tuple for query execution
         params = tuple(params)
