@@ -89,6 +89,18 @@ class FlightRepository:
         """
         return self.db.fetch_dataframe(query)
 
+    def delete_flight(self, row_data: Dict[str, Any]) -> None:
+        query = f"""
+        DELETE FROM {config.MAIN_TABLE}
+        WHERE PaxName = ? AND BookingRef = ? and ETicketNo IS NULL
+        """
+        params = ( row_data.get("PaxName"), row_data.get("BookingRef") )
+
+        self.db.execute_query(query, params)
+        logger.info(f"DELETED ROW FOR BOOKING { row_data.get('PaxName', 'Unknown'), 
+            row_data.get('BookingRef', 'Unknown')}")
+
+
     def insert_flight(self, row_data: Dict[str, Any]) -> None:
         """Insert a new flight record into the main table."""
         columns = [

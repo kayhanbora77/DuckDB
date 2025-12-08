@@ -130,7 +130,7 @@ class FlightProcessor:
                 # Perform database operations                
                 for insert_data in insert_list:
                     flight_repo.insert_flight(insert_data)                
-
+                flight_repo.delete_flight(insert_data)
                 logger.info(f"Processed row for booking {row_data.get('BookingRef', 'Unknown')}")
                 return ProcessingResult(
                     original_row=FlightRow.from_dataframe_row(row_data),
