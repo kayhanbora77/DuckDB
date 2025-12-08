@@ -35,8 +35,10 @@ class FlightProcessor:
             departure_date_str = row.get(date_key)
             # Add flight number if valid
             if flight_number is not None and flight_number != 'NULL':
+                if str(flight_number).endswith('000'):
+                    logger.info(f"DELETED FLIGHT_NUMBER and DEPARTURELOCALDATE {row.get("PaxName")}")
+                    continue                
                 flight_numbers.append(flight_number)
-
             # Add departure date if valid
             if departure_date_str is not None and departure_date_str != 'NULL':
                 try:
@@ -56,6 +58,7 @@ class FlightProcessor:
         current_flight_group = [flight_numbers[0]]
         date_groups = []
         current_date_group = [datetimes[0]]
+
 
         for i in range(1, len(datetimes)):
             diff_hours = (datetimes[i] - datetimes[i-1]).total_seconds() / 3600
@@ -114,7 +117,7 @@ class FlightProcessor:
                     success=True,
                     message="No flight data to process"
                 )
-
+            #row_data = delete_bus_transition(row_data)
             date_groups, flight_groups = FlightProcessor.group_by_24h(departure_dates, flight_numbers)
             if len(date_groups) <= 1:
                 return ProcessingResult(
@@ -154,17 +157,19 @@ class FlightProcessor:
                 message=f"Processing failed: {str(e)}"
             )
 
-def has_bus_transition(row: Dict[str, Any]) -> bool:
+def delete_bus_transition(row: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Check if a flight number ends with three zeros.
+    delete if a flight numbers ends with three zeros.
     """
     for i in range(1, config.MAX_FLIGHT_ENTRIES + 1):
         flight_number = row.get(f'FlightNumber{i}')
         if not flight_number or flight_number == 'Unknown':
-            return False
+            continue
         if str(flight_number).endswith('000'):
-            return True
-    return False
+            row[f'FlightNumber{i}'] = None
+            row[f'DepartureDateLocal{i}'] = None
+            logger.info(f"DELETED FLIGHT_NUMBER and DEPARTURELOCALDATE {row.get("PaxName")}")
+    return row
 
 # Global processor instance
 flight_processor = FlightProcessor()

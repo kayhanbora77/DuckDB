@@ -12,7 +12,7 @@ import sys
 from typing import NoReturn
 
 from database import DatabaseError, flight_repo
-from flight_processor import FlightProcessorError, flight_processor, has_bus_transition
+from flight_processor import FlightProcessorError, flight_processor, delete_bus_transition
 from logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -42,12 +42,12 @@ def process_all_flights() -> None:
             try:
                 booking_ref = row.get('BookingRef', 'Unknown')
                 pax_name = row.get('PaxName', 'Unknown')
-
+                """
                 if has_bus_transition(row.to_dict()):
                     logger.info(f"Skipping row {row_idx + 1}/{total_rows}: "
                                 f"BookingRef={booking_ref}, PaxName={pax_name}")
                     continue
-
+                """
                 logger.info(f"Processing row {row_idx + 1}/{total_rows}: "
                            f"BookingRef={booking_ref}, PaxName={pax_name}")
 
