@@ -14,7 +14,6 @@ from typing import NoReturn
 from database import DatabaseError, flight_repo
 from flight_processor import FlightProcessorError, flight_processor, has_bus_transition
 from logging_config import setup_logging
-from models import ProcessingResult
 
 logger = logging.getLogger(__name__)
 

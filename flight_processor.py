@@ -67,8 +67,7 @@ class FlightProcessor:
             else:
                 # Start new group
                 date_groups.append(current_date_group)
-                flight_groups.append(current_flight_group)
-                
+                flight_groups.append(current_flight_group)                
                 current_date_group = [datetimes[i]]
                 current_flight_group = [flight_numbers[i]]
         # Append last group
