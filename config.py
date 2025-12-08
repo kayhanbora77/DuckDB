@@ -14,7 +14,7 @@ class Config:
     DATABASE_PATH = DATABASE_DIR / DATABASE_NAME
 
     # Table names
-    MAIN_TABLE = "my_db.main.TBO3_2021_ONBIN"    
+    MAIN_TABLE = "my_db.main.TBO3_2021_100"    
 
     # Column prefixes
     FLIGHT_NUMBER_PREFIX = "FlightNumber"
@@ -26,7 +26,6 @@ class Config:
     # Maximum number of flight entries per row
     MAX_FLIGHT_ENTRIES = 7
 
-    # Default values
     INSERTED_TICKET_NO = "INSERTED"
     UPDATED_TICKET_NO = "UPDATED"
 
@@ -40,7 +39,6 @@ class Config:
         """Get the full database path as a string."""
         cls.ensure_database_dir_exists()
         return str(cls.DATABASE_PATH)
-
 
 # Global configuration instance
 config = Config()

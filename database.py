@@ -89,14 +89,6 @@ class FlightRepository:
         """
         return self.db.fetch_dataframe(query)
 
-    def get_flight_by_passenger(self, pax_name: str, booking_ref: str) -> pd.DataFrame:
-        """Get flight record by passenger name and booking reference."""
-        query = f"""
-            SELECT * FROM {config.MAIN_TABLE}
-            WHERE PaxName = ? AND BookingRef = ?
-        """
-        return self.db.fetch_dataframe(query, (pax_name, booking_ref))
-
     def insert_flight(self, row_data: Dict[str, Any]) -> None:
         """Insert a new flight record into the main table."""
         columns = [

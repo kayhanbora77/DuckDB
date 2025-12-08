@@ -16,9 +16,7 @@ from flight_processor import FlightProcessorError, flight_processor, has_bus_tra
 from logging_config import setup_logging
 from models import ProcessingResult
 
-
 logger = logging.getLogger(__name__)
-
 
 def process_all_flights() -> None:
     """
@@ -27,7 +25,6 @@ def process_all_flights() -> None:
     """
     try:
         logger.info("Starting flight data processing")
-
         # Retrieve all flight data
         df = flight_repo.get_all_flights()
         total_rows = len(df)
@@ -42,17 +39,17 @@ def process_all_flights() -> None:
         error_count = 0
 
         # Process each row
-        for index, row in df.iterrows():            
+        for row_idx, (index, row) in enumerate(df.iterrows()):            
             try:
                 booking_ref = row.get('BookingRef', 'Unknown')
                 pax_name = row.get('PaxName', 'Unknown')
 
-                if has_bus_transition(row):
-                    logger.info(f"Skipping row {index + 1}/{total_rows}: "
+                if has_bus_transition(row.to_dict()):
+                    logger.info(f"Skipping row {row_idx + 1}/{total_rows}: "
                                 f"BookingRef={booking_ref}, PaxName={pax_name}")
                     continue
 
-                logger.info(f"Processing row {index + 1}/{total_rows}: "
+                logger.info(f"Processing row {row_idx + 1}/{total_rows}: "
                            f"BookingRef={booking_ref}, PaxName={pax_name}")
 
                 # Process the flight row
@@ -65,17 +62,14 @@ def process_all_flights() -> None:
                     logger.info(f"Successfully processed: {result.message}")
                 else:
                     error_count += 1
-                    logger.error(f"Failed to process row {index + 1}: {result.message}")
-
+                    logger.error(f"Failed to process row {row_idx + 1}: {result.message}")
                 # Log progress every 10 rows
-                if (index + 1) % 10 == 0:
-                    logger.info(f"Progress: {index + 1}/{total_rows} rows processed")
-
+                if (row_idx + 1) % 10 == 0:
+                    logger.info(f"Progress: {row_idx + 1}/{total_rows} rows processed")
             except Exception as e:
                 error_count += 1
-                logger.error(f"Unexpected error processing row {index + 1}: {e}")
+                logger.error(f"Unexpected error processing row {row_idx + 1}: {e}")
                 continue
-
         # Final summary
         logger.info("Processing complete!")
         logger.info(f"Total rows: {total_rows}")
