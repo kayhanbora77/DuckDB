@@ -156,9 +156,15 @@ class FlightProcessor:
                     # Perform database operations                
                     for duplicate_data in insert_duplicate_list:
                         flight_repo.insert_flight(duplicate_data)                
-                    flight_repo.delete_flight(duplicate_data)
+                    #flight_repo.delete_flight(duplicate_data)
             
             if len(date_groups) <= 1:
+                if len(duplicate_dates) == 0:
+                    # Perform database operations                
+                    insert_list = FlightProcessor.get_insert_list(row_data, date_groups, flight_groups)
+                    if insert_list:
+                        for insert_data in insert_list:
+                            flight_repo.insert_flight(insert_data)                
                 return ProcessingResult(
                     original_row=FlightRow.from_dataframe_row(row_data),
                     groups=date_groups,
@@ -171,7 +177,7 @@ class FlightProcessor:
                 # Perform database operations                
                 for insert_data in insert_list:
                     flight_repo.insert_flight(insert_data)                
-                flight_repo.delete_flight(insert_data)
+                #flight_repo.delete_flight(insert_data)
                 logger.info(f"Processed row for booking {row_data.get('BookingRef', 'Unknown')}")
                 return ProcessingResult(
                     original_row=FlightRow.from_dataframe_row(row_data),

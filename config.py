@@ -14,7 +14,8 @@ class Config:
     DATABASE_PATH = DATABASE_DIR / DATABASE_NAME
 
     # Table names
-    MAIN_TABLE = "my_db.main.TBO3_2021_100"    
+    SOURCE_TABLE = "my_db.main.TBO3_2021_100"    
+    TARGET_TABLE = "my_db.main.TBO3_2021_100_TARGET"    
 
     # Column prefixes
     FLIGHT_NUMBER_PREFIX = "FlightNumber"
@@ -26,8 +27,7 @@ class Config:
     # Maximum number of flight entries per row
     MAX_FLIGHT_ENTRIES = 7
 
-    INSERTED_TICKET_NO = "INSERTED"
-    UPDATED_TICKET_NO = "UPDATED"
+    #INSERTED_TICKET_NO = "INSERTED"
 
     @classmethod
     def ensure_database_dir_exists(cls) -> None:

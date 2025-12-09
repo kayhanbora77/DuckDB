@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Optional, Tuple
 import duckdb
 import pandas as pd
 
-from config import config
+from config import Config, config
 
 logger = logging.getLogger(__name__)
 
@@ -85,13 +85,13 @@ class FlightRepository:
     def get_all_flights(self) -> pd.DataFrame:
         """Get all flight records excluding specified journey type."""
         query = f"""
-            SELECT * FROM {config.MAIN_TABLE}        
+            SELECT * FROM {config.SOURCE_TABLE}        
         """
         return self.db.fetch_dataframe(query)
 
     def delete_flight(self, row_data: Dict[str, Any]) -> None:
         query = f"""
-        DELETE FROM {config.MAIN_TABLE}
+        DELETE FROM {config.SOURCE_TABLE}
         WHERE PaxName = ? AND BookingRef = ? and ETicketNo IS NULL
         """
         params = ( row_data.get("PaxName"), row_data.get("BookingRef") )
@@ -100,8 +100,8 @@ class FlightRepository:
         logger.info(f"DELETED ROW FOR BOOKING { row_data.get('PaxName', 'Unknown'), 
             row_data.get('BookingRef', 'Unknown')}")
 
-
     def insert_flight(self, row_data: Dict[str, Any]) -> None:
+
         """Insert a new flight record into the main table."""
         columns = [
             'PaxName', 'BookingRef', 'ETicketNo', 'ClientCode', 'Airline', 'JourneyType',
@@ -112,10 +112,9 @@ class FlightRepository:
             'DepartureDateLocal7', 'Airport1', 'Airport2', 'Airport3', 'Airport4',
             'Airport5', 'Airport6', 'Airport7', 'Airport8'
         ]
-
         placeholders = ', '.join(['?' for _ in columns])
         query = f"""
-            INSERT INTO {config.MAIN_TABLE} ({', '.join(columns)})
+            INSERT INTO {config.TARGET_TABLE} ({', '.join(columns)})
             VALUES ({placeholders})
         """
 
@@ -123,7 +122,7 @@ class FlightRepository:
         params = [row_data.get(col, None) for col in columns]
 
         # Set ETicketNo to INSERT
-        params[2] = config.INSERTED_TICKET_NO  # ETicketNo position
+        #params[2] = config.INSERTED_TICKET_NO  # ETicketNo position
 
         # Convert to tuple for query execution
         params = tuple(params)
@@ -131,34 +130,34 @@ class FlightRepository:
         self.db.execute_query(query, params)
         logger.info(f"INSERTED ROW FOR BOOKING {row_data.get('BookingRef', 'Unknown')}")
 
-    def update_flight(self, row_data: Dict[str, Any]) -> None:
-        """Update an existing flight record."""
-        query = f"""
-            UPDATE {config.MAIN_TABLE}
-            SET ETicketNo = ?,
-                FlightNumber1 = ?, FlightNumber2 = ?, FlightNumber3 = ?,
-                FlightNumber4 = ?, FlightNumber5 = ?, FlightNumber6 = ?,
-                FlightNumber7 = ?, DepartureDateLocal1 = ?, DepartureDateLocal2 = ?,
-                DepartureDateLocal3 = ?, DepartureDateLocal4 = ?, DepartureDateLocal5 = ?,
-                DepartureDateLocal6 = ?, DepartureDateLocal7 = ?
-            WHERE PaxName = ? AND BookingRef = ?
-        """
+    # def update_flight(self, row_data: Dict[str, Any]) -> None:
 
-        params = (
-            config.UPDATED_TICKET_NO,
-            row_data.get('FlightNumber1'), row_data.get('FlightNumber2'),
-            row_data.get('FlightNumber3'), row_data.get('FlightNumber4'),
-            row_data.get('FlightNumber5'), row_data.get('FlightNumber6'),
-            row_data.get('FlightNumber7'),
-            row_data.get('DepartureDateLocal1'), row_data.get('DepartureDateLocal2'),
-            row_data.get('DepartureDateLocal3'), row_data.get('DepartureDateLocal4'),
-            row_data.get('DepartureDateLocal5'), row_data.get('DepartureDateLocal6'),
-            row_data.get('DepartureDateLocal7'),
-            row_data.get('PaxName'), row_data.get('BookingRef')
-        )
+    #     query = f"""
+    #         UPDATE {config.SOURCE_TABLE}
+    #         SET ETicketNo = ?,
+    #             FlightNumber1 = ?, FlightNumber2 = ?, FlightNumber3 = ?,
+    #             FlightNumber4 = ?, FlightNumber5 = ?, FlightNumber6 = ?,
+    #             FlightNumber7 = ?, DepartureDateLocal1 = ?, DepartureDateLocal2 = ?,
+    #             DepartureDateLocal3 = ?, DepartureDateLocal4 = ?, DepartureDateLocal5 = ?,
+    #             DepartureDateLocal6 = ?, DepartureDateLocal7 = ?
+    #         WHERE PaxName = ? AND BookingRef = ?
+    #     """
 
-        self.db.execute_query(query, params)
-        logger.info(f"UPDATED ROW FOR BOOKING {row_data.get('BookingRef', 'Unknown')}")
+    #     params = (
+    #         config.UPDATED_TICKET_NO,
+    #         row_data.get('FlightNumber1'), row_data.get('FlightNumber2'),
+    #         row_data.get('FlightNumber3'), row_data.get('FlightNumber4'),
+    #         row_data.get('FlightNumber5'), row_data.get('FlightNumber6'),
+    #         row_data.get('FlightNumber7'),
+    #         row_data.get('DepartureDateLocal1'), row_data.get('DepartureDateLocal2'),
+    #         row_data.get('DepartureDateLocal3'), row_data.get('DepartureDateLocal4'),
+    #         row_data.get('DepartureDateLocal5'), row_data.get('DepartureDateLocal6'),
+    #         row_data.get('DepartureDateLocal7'),
+    #         row_data.get('PaxName'), row_data.get('BookingRef')
+    #     )
+
+    #     self.db.execute_query(query, params)
+    #     logger.info(f"UPDATED ROW FOR BOOKING {row_data.get('BookingRef', 'Unknown')}")
 
 # Global instances
 db_connection = DatabaseConnection()
