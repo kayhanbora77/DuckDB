@@ -1,6 +1,7 @@
 """
 Flight processing utilities for grouping and manipulating flight data.
 """
+from collections import Counter
 from itertools import pairwise
 import logging
 from datetime import datetime
@@ -59,7 +60,6 @@ class FlightProcessor:
         date_groups = []
         current_date_group = [datetimes[0]]
 
-
         for i in range(1, len(datetimes)):
             diff_hours = (datetimes[i] - datetimes[i-1]).total_seconds() / 3600
             
@@ -73,12 +73,44 @@ class FlightProcessor:
                 flight_groups.append(current_flight_group)                
                 current_date_group = [datetimes[i]]
                 current_flight_group = [flight_numbers[i]]
-        # Append last group
+        # Append last group                
         date_groups.append(current_date_group)
-        flight_groups.append(current_flight_group)
+        flight_groups.append(current_flight_group)        
 
-        return date_groups, flight_groups
+        count_dates = Counter(current_date_group)
+        count_flights = Counter(current_flight_group)       
+        duplicate_dates = []
+        duplicate_flights = []
+        for (date, count_date), (flight, count_flight) in zip(count_dates.items(), count_flights.items()):
+            if count_date > 1:
+                duplicate_dates.append(date)
+                print(f"Duplicate date: {date} → {count_date} times")
+            if count_flight > 1:
+                duplicate_flights.append(flight)
+                print(f"Duplicate flight: {flight} → {count_flight} times")
+        
+        return date_groups, flight_groups, duplicate_dates,duplicate_flights
 
+    @staticmethod
+    def get_duplicate_insert(original_row: Dict[str, Any], dates: List[datetime], flights: List[str]) -> List[Dict[str, Any]]:
+        duplicate_list = []
+        duplicate_data = original_row.copy()
+
+        # Clear all flight entries first
+        for i in range(1, config.MAX_FLIGHT_ENTRIES + 1):
+            flight_key = f'{config.FLIGHT_NUMBER_PREFIX}{i}'
+            date_key = f'{config.DEPARTURE_DATE_PREFIX}{i}'
+            duplicate_data[flight_key] = None
+            duplicate_data[date_key] = None
+
+        # Set the duplicate values
+        for item_idx, (date_item, flight_item) in enumerate(zip(dates, flights), 1):
+            duplicate_data[f'{config.FLIGHT_NUMBER_PREFIX}{item_idx}'] = flight_item
+            duplicate_data[f'{config.DEPARTURE_DATE_PREFIX}{item_idx}'] = date_item
+
+        duplicate_list.append(duplicate_data)
+        return duplicate_list
+                
     @staticmethod
     def get_insert_list(original_row: Dict[str, Any], date_groups: List[List[datetime]], flight_groups: List[List[datetime]]) -> List[Dict[str, Any]]:
 
@@ -116,9 +148,16 @@ class FlightProcessor:
                     groups=[],
                     success=True,
                     message="No flight data to process"
-                )
-            #row_data = delete_bus_transition(row_data)
-            date_groups, flight_groups = FlightProcessor.group_by_24h(departure_dates, flight_numbers)
+                )            
+            date_groups, flight_groups, duplicate_dates, duplicate_flights = FlightProcessor.group_by_24h(departure_dates, flight_numbers)
+            if len(duplicate_dates) > 0:
+                insert_duplicate_list = FlightProcessor.get_duplicate_insert(row_data, duplicate_dates, duplicate_flights)    
+                if insert_duplicate_list:
+                    # Perform database operations                
+                    for duplicate_data in insert_duplicate_list:
+                        flight_repo.insert_flight(duplicate_data)                
+                    flight_repo.delete_flight(duplicate_data)
+            
             if len(date_groups) <= 1:
                 return ProcessingResult(
                     original_row=FlightRow.from_dataframe_row(row_data),
@@ -126,7 +165,6 @@ class FlightProcessor:
                     success=True,
                     message="Single group - no processing needed"
                 )
-
             # Create insert and update data
             insert_list = FlightProcessor.get_insert_list(row_data, date_groups, flight_groups)
             if insert_list:
@@ -156,20 +194,6 @@ class FlightProcessor:
                 success=False,
                 message=f"Processing failed: {str(e)}"
             )
-
-def delete_bus_transition(row: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    delete if a flight numbers ends with three zeros.
-    """
-    for i in range(1, config.MAX_FLIGHT_ENTRIES + 1):
-        flight_number = row.get(f'FlightNumber{i}')
-        if not flight_number or flight_number == 'Unknown':
-            continue
-        if str(flight_number).endswith('000'):
-            row[f'FlightNumber{i}'] = None
-            row[f'DepartureDateLocal{i}'] = None
-            logger.info(f"DELETED FLIGHT_NUMBER and DEPARTURELOCALDATE {row.get("PaxName")}")
-    return row
 
 # Global processor instance
 flight_processor = FlightProcessor()

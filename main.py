@@ -12,7 +12,7 @@ import sys
 from typing import NoReturn
 
 from database import DatabaseError, flight_repo
-from flight_processor import FlightProcessorError, flight_processor, delete_bus_transition
+from flight_processor import FlightProcessorError, flight_processor
 from logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -108,7 +108,6 @@ def main() -> NoReturn:
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
